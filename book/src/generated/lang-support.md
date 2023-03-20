@@ -141,7 +141,7 @@
 | typescript | ✓ | ✓ | ✓ | `typescript-language-server` |
 | ungrammar | ✓ |  |  |  |
 | uxntal | ✓ |  |  |  |
-| v | ✓ |  |  | `v` |
+| v | ✓ | ✓ | ✓ | `v` |
 | vala | ✓ |  |  | `vala-language-server` |
 | verilog | ✓ | ✓ |  | `svlangserver` |
 | vhs | ✓ |  |  |  |
