@@ -749,7 +749,10 @@ impl Default for Config {
             bufferline: BufferLine::default(),
             indent_guides: IndentGuidesConfig::default(),
             color_modes: false,
-            soft_wrap: SoftWrap::default(),
+            soft_wrap: SoftWrap {
+                enable: Some(false),
+                ..SoftWrap::default()
+            },
             text_width: 80,
             completion_replace: false,
             workspace_lsp_roots: Vec::new(),
@@ -851,7 +854,7 @@ pub struct Editor {
     pub config_events: (UnboundedSender<ConfigEvent>, UnboundedReceiver<ConfigEvent>),
     /// Allows asynchronous tasks to control the rendering
     /// The `Notify` allows asynchronous tasks to request the editor to perform a redraw
-    /// The `RwLock` blocks the editor from performing the render until an exclusive lock can be aquired
+    /// The `RwLock` blocks the editor from performing the render until an exclusive lock can be acquired
     pub redraw_handle: RedrawHandle,
     pub needs_redraw: bool,
     /// Cached position of the cursor calculated during rendering.

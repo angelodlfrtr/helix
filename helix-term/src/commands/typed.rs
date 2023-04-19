@@ -116,7 +116,7 @@ fn open(cx: &mut compositor::Context, args: &[Cow<str>], event: PromptEvent) -> 
                 let call: job::Callback = job::Callback::EditorCompositor(Box::new(
                     move |editor: &mut Editor, compositor: &mut Compositor| {
                         let picker = ui::file_picker(path, &editor.config());
-                        compositor.push(Box::new(overlayed(picker)));
+                        compositor.push(Box::new(overlaid(picker)));
                     },
                 ));
                 Ok(call)
@@ -1335,7 +1335,7 @@ fn lsp_workspace_command(
                     let picker = ui::Picker::new(commands, (), |cx, command, _action| {
                         execute_lsp_command(cx.editor, command.clone());
                     });
-                    compositor.push(Box::new(overlayed(picker)))
+                    compositor.push(Box::new(overlaid(picker)))
                 },
             ));
             Ok(call)
@@ -1770,12 +1770,12 @@ fn toggle_option(
     let pointer = format!("/{}", key.replace('.', "/"));
     let value = config.pointer_mut(&pointer).ok_or_else(key_error)?;
 
-    if let Value::Bool(b) = *value {
-        *value = Value::Bool(!b);
-    } else {
+    let Value::Bool(old_value) = *value else {
         anyhow::bail!("Key `{}` is not toggle-able", key)
-    }
+    };
 
+    let new_value = !old_value;
+    *value = Value::Bool(new_value);
     // This unwrap should never fail because we only replace one boolean value
     // with another, maintaining a valid json config
     let config = serde_json::from_value(config).unwrap();
@@ -1784,6 +1784,8 @@ fn toggle_option(
         .config_events
         .0
         .send(ConfigEvent::Update(config))?;
+    cx.editor
+        .set_status(format!("Option `{}` is now set to `{}`", key, new_value));
     Ok(())
 }
 
