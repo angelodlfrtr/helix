@@ -739,6 +739,18 @@ fn write_all(
     write_all_impl(cx, false, true)
 }
 
+fn force_write_all(
+    cx: &mut compositor::Context,
+    _args: &[Cow<str>],
+    event: PromptEvent,
+) -> anyhow::Result<()> {
+    if event != PromptEvent::Validate {
+        return Ok(());
+    }
+
+    write_all_impl(cx, true, true)
+}
+
 fn write_all_quit(
     cx: &mut compositor::Context,
     _args: &[Cow<str>],
@@ -893,6 +905,25 @@ fn yank_main_selection_to_clipboard(
     }
 
     yank_main_selection_to_clipboard_impl(cx.editor, ClipboardType::Clipboard)
+}
+
+fn yank_joined(
+    cx: &mut compositor::Context,
+    args: &[Cow<str>],
+    event: PromptEvent,
+) -> anyhow::Result<()> {
+    if event != PromptEvent::Validate {
+        return Ok(());
+    }
+
+    ensure!(args.len() <= 1, ":yank-join takes at most 1 argument");
+
+    let doc = doc!(cx.editor);
+    let default_sep = Cow::Borrowed(doc.line_ending.as_str());
+    let separator = args.first().unwrap_or(&default_sep);
+    let register = cx.editor.selected_register.unwrap_or('"');
+    yank_joined_impl(cx.editor, separator, register);
+    Ok(())
 }
 
 fn yank_joined_to_clipboard(
@@ -1062,14 +1093,11 @@ fn change_current_directory(
             .as_ref(),
     );
 
-    if let Err(e) = std::env::set_current_dir(dir) {
-        bail!("Couldn't change the current working directory: {}", e);
-    }
+    helix_loader::set_current_working_dir(dir)?;
 
-    let cwd = std::env::current_dir().context("Couldn't get the new working directory")?;
     cx.editor.set_status(format!(
         "Current working directory is now {}",
-        cwd.display()
+        helix_loader::current_working_dir().display()
     ));
     Ok(())
 }
@@ -1083,9 +1111,14 @@ fn show_current_directory(
         return Ok(());
     }
 
-    let cwd = std::env::current_dir().context("Couldn't get the new working directory")?;
-    cx.editor
-        .set_status(format!("Current working directory is {}", cwd.display()));
+    let cwd = helix_loader::current_working_dir();
+    let message = format!("Current working directory is {}", cwd.display());
+
+    if cwd.exists() {
+        cx.editor.set_status(message);
+    } else {
+        cx.editor.set_error(format!("{} (deleted)", message));
+    }
     Ok(())
 }
 
@@ -2426,6 +2459,13 @@ pub const TYPABLE_COMMAND_LIST: &[TypableCommand] = &[
             signature: CommandSignature::none(),
         },
         TypableCommand {
+            name: "write-all!",
+            aliases: &["wa!"],
+            doc: "Forcefully write changes from all buffers to disk creating necessary subdirectories.",
+            fun: force_write_all,
+            signature: CommandSignature::none(),
+        },
+        TypableCommand {
             name: "write-quit-all",
             aliases: &["wqa", "xa"],
             doc: "Write changes from all buffers to disk and close all views.",
@@ -2473,6 +2513,13 @@ pub const TYPABLE_COMMAND_LIST: &[TypableCommand] = &[
             doc: "Change the editor theme (show current theme if no name specified).",
             fun: theme,
             signature: CommandSignature::positional(&[completers::theme]),
+        },
+        TypableCommand {
+            name: "yank-join",
+            aliases: &[],
+            doc: "Yank joined selections. A separator can be provided as first argument. Default value is newline.",
+            fun: yank_joined,
+            signature: CommandSignature::none(),
         },
         TypableCommand {
             name: "clipboard-yank",
