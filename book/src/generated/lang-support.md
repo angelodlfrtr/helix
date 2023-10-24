@@ -44,6 +44,7 @@
 | forth | ✓ |  |  | `forth-lsp` |
 | fortran | ✓ |  | ✓ | `fortls` |
 | fsharp | ✓ |  |  | `fsautocomplete` |
+| gas | ✓ | ✓ |  |  |
 | gdscript | ✓ | ✓ | ✓ |  |
 | gemini | ✓ |  |  |  |
 | git-attributes | ✓ |  |  |  |
@@ -58,7 +59,7 @@
 | gomod | ✓ |  |  | `gopls` |
 | gotmpl | ✓ |  |  | `gopls` |
 | gowork | ✓ |  |  | `gopls` |
-| graphql | ✓ |  |  |  |
+| graphql | ✓ |  |  | `graphql-lsp` |
 | hare | ✓ |  |  |  |
 | haskell | ✓ | ✓ |  | `haskell-language-server-wrapper` |
 | haskell-persistent | ✓ |  |  |  |
@@ -75,6 +76,7 @@
 | jinja | ✓ |  |  |  |
 | jsdoc | ✓ |  |  |  |
 | json | ✓ |  | ✓ | `vscode-json-language-server` |
+| json5 | ✓ |  |  |  |
 | jsonnet | ✓ |  |  | `jsonnet-language-server` |
 | jsx | ✓ | ✓ | ✓ | `typescript-language-server` |
 | julia | ✓ | ✓ | ✓ | `julia` |
@@ -121,7 +123,7 @@
 | prolog |  |  |  | `swipl` |
 | protobuf | ✓ |  | ✓ | `bufls`, `pb` |
 | prql | ✓ |  |  |  |
-| purescript | ✓ |  |  | `purescript-language-server` |
+| purescript | ✓ | ✓ |  | `purescript-language-server` |
 | python | ✓ | ✓ | ✓ | `pylsp` |
 | qml | ✓ |  | ✓ | `qmlls` |
 | r | ✓ |  |  | `R` |
@@ -153,6 +155,7 @@
 | t32 | ✓ |  |  |  |
 | tablegen | ✓ | ✓ | ✓ |  |
 | task | ✓ |  |  |  |
+| templ | ✓ |  |  | `templ` |
 | tfvars | ✓ |  | ✓ | `terraform-ls` |
 | todotxt | ✓ |  |  |  |
 | toml | ✓ |  |  | `taplo` |
@@ -177,6 +180,6 @@
 | wren | ✓ | ✓ | ✓ |  |
 | xit | ✓ |  |  |  |
 | xml | ✓ |  | ✓ |  |
-| yaml | ✓ |  | ✓ | `yaml-language-server` |
+| yaml | ✓ |  | ✓ | `yaml-language-server`, `ansible-language-server` |
 | yuck | ✓ |  |  |  |
 | zig | ✓ | ✓ | ✓ | `zls` |
