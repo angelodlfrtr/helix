@@ -1,5 +1,6 @@
 | Language | Syntax Highlighting | Treesitter Textobjects | Auto Indent | Default LSP |
 | --- | --- | --- | --- | --- |
+| agda | ✓ |  |  |  |
 | astro | ✓ |  |  |  |
 | awk | ✓ | ✓ |  | `awk-language-server` |
 | bash | ✓ | ✓ | ✓ | `bash-language-server` |
@@ -10,7 +11,7 @@
 | blueprint | ✓ |  |  | `blueprint-compiler` |
 | c | ✓ | ✓ | ✓ | `clangd` |
 | c-sharp | ✓ | ✓ |  | `OmniSharp` |
-| cabal |  |  |  |  |
+| cabal |  |  |  | `haskell-language-server-wrapper` |
 | cairo | ✓ | ✓ | ✓ | `cairo-language-server` |
 | capnp | ✓ |  | ✓ |  |
 | clojure | ✓ |  |  | `clojure-lsp` |
@@ -73,6 +74,7 @@
 | idris |  |  |  | `idris2-lsp` |
 | iex | ✓ |  |  |  |
 | ini | ✓ |  |  |  |
+| janet | ✓ |  |  |  |
 | java | ✓ | ✓ | ✓ | `jdtls` |
 | javascript | ✓ | ✓ | ✓ | `typescript-language-server` |
 | jinja | ✓ |  |  |  |
@@ -146,6 +148,7 @@
 | scheme | ✓ |  | ✓ |  |
 | scss | ✓ |  |  | `vscode-css-language-server` |
 | slint | ✓ |  | ✓ | `slint-lsp` |
+| smali | ✓ |  | ✓ |  |
 | smithy | ✓ |  |  | `cs` |
 | sml | ✓ |  |  |  |
 | solidity | ✓ |  |  | `solc` |
