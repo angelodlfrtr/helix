@@ -90,17 +90,18 @@ mode.normal = "NORMAL"
 mode.insert = "INSERT"
 mode.select = "SELECT"
 ```
+
 The `[editor.statusline]` key takes the following sub-keys:
 
-| Key           | Description | Default |
-| ---           | ---         | ---     |
-| `left`        | A list of elements aligned to the left of the statusline | `["mode", "spinner", "file-name", "read-only-indicator", "file-modification-indicator"]` |
-| `center`      | A list of elements aligned to the middle of the statusline | `[]` |
-| `right`       | A list of elements aligned to the right of the statusline | `["diagnostics", "selections", "register", "position", "file-encoding"]` |
-| `separator`   | The character used to separate elements in the statusline | `"│"` |
-| `mode.normal` | The text shown in the `mode` element for normal mode | `"NOR"` |
-| `mode.insert` | The text shown in the `mode` element for insert mode | `"INS"` |
-| `mode.select` | The text shown in the `mode` element for select mode | `"SEL"` |
+| Key           | Description                                                | Default                                                                                  |
+| ------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `left`        | A list of elements aligned to the left of the statusline   | `["mode", "spinner", "file-name", "read-only-indicator", "file-modification-indicator"]` |
+| `center`      | A list of elements aligned to the middle of the statusline | `[]`                                                                                     |
+| `right`       | A list of elements aligned to the right of the statusline  | `["diagnostics", "selections", "register", "position", "file-encoding"]`                 |
+| `separator`   | The character used to separate elements in the statusline  | `"│"`                                                                                    |
+| `mode.normal` | The text shown in the `mode` element for normal mode       | `"NOR"`                                                                                  |
+| `mode.insert` | The text shown in the `mode` element for insert mode       | `"INS"`                                                                                  |
+| `mode.select` | The text shown in the `mode` element for select mode       | `"SEL"`                                                                                  |
 
 The following statusline elements can be configured:
 
@@ -112,36 +113,35 @@ The following statusline elements can be configured:
 | `file-absolute-path` | The absolute path/name of the opened file |
 | `file-base-name` | The basename of the opened file |
 | `file-modification-indicator` | The indicator to show whether the file is modified (a `[+]` appears when there are unsaved changes) |
-| `file-encoding` | The encoding of the opened file if it differs from UTF-8 |
-| `file-line-ending` | The file line endings (CRLF or LF) |
-| `read-only-indicator` | An indicator that shows `[readonly]` when a file cannot be written |
-| `total-line-numbers` | The total line numbers of the opened file |
-| `file-type` | The type of the opened file |
-| `diagnostics` | The number of warnings and/or errors |
-| `workspace-diagnostics` | The number of warnings and/or errors on workspace |
-| `selections` | The number of active selections |
-| `primary-selection-length` | The number of characters currently in primary selection |
-| `position` | The cursor position |
-| `position-percentage` | The cursor position as a percentage of the total number of lines |
-| `separator` | The string defined in `editor.statusline.separator` (defaults to `"│"`) |
-| `spacer` | Inserts a space between elements (multiple/contiguous spacers may be specified) |
-| `version-control` | The current branch name or detached commit hash of the opened workspace |
-| `register` | The current selected register |
+| `file-encoding`               | The encoding of the opened file if it differs from UTF-8                                            |
+| `file-line-ending`            | The file line endings (CRLF or LF)                                                                  |
+| `read-only-indicator`         | An indicator that shows `[readonly]` when a file cannot be written                                  |
+| `total-line-numbers`          | The total line numbers of the opened file                                                           |
+| `file-type`                   | The type of the opened file                                                                         |
+| `diagnostics`                 | The number of warnings and/or errors                                                                |
+| `workspace-diagnostics`       | The number of warnings and/or errors on workspace                                                   |
+| `selections`                  | The number of active selections                                                                     |
+| `primary-selection-length`    | The number of characters currently in primary selection                                             |
+| `position`                    | The cursor position                                                                                 |
+| `position-percentage`         | The cursor position as a percentage of the total number of lines                                    |
+| `separator`                   | The string defined in `editor.statusline.separator` (defaults to `"│"`)                             |
+| `spacer`                      | Inserts a space between elements (multiple/contiguous spacers may be specified)                     |
+| `version-control`             | The current branch name or detached commit hash of the opened workspace                             |
+| `register`                    | The current selected register                                                                       |
 
 ### `[editor.lsp]` Section
 
-| Key                   | Description                                                 | Default |
-| ---                   | -----------                                                 | ------- |
-| `enable`              | Enables LSP integration. Setting to false will completely disable language servers regardless of language settings.| `true` |
-| `display-messages`    | Display LSP progress messages below statusline[^1]          | `false` |
-| `auto-signature-help` | Enable automatic popup of signature help (parameter hints)  | `true`  |
-| `display-inlay-hints` | Display inlay hints[^2]                                     | `false` |
-| `display-signature-help-docs` | Display docs under signature help popup             | `true`  |
-| `snippets`      | Enables snippet completions. Requires a server restart (`:lsp-restart`) to take effect after `:config-reload`/`:set`. | `true`  |
-| `goto-reference-include-declaration` | Include declaration in the goto references popup. | `true`  |
+| Key                                  | Description                                                                                                           | Default |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------- |
+| `enable`                             | Enables LSP integration. Setting to false will completely disable language servers regardless of language settings.   | `true`  |
+| `display-messages`                   | Display LSP progress messages below statusline[^1]                                                                    | `false` |
+| `auto-signature-help`                | Enable automatic popup of signature help (parameter hints)                                                            | `true`  |
+| `display-inlay-hints`                | Display inlay hints[^2]                                                                                               | `false` |
+| `display-signature-help-docs`        | Display docs under signature help popup                                                                               | `true`  |
+| `snippets`                           | Enables snippet completions. Requires a server restart (`:lsp-restart`) to take effect after `:config-reload`/`:set`. | `true`  |
+| `goto-reference-include-declaration` | Include declaration in the goto references popup.                                                                     | `true`  |
 
 [^1]: By default, a progress spinner is shown in the statusline beside the file path.
-
 [^2]: You may also have to activate them in the LSP config for them to appear, not just in Helix. Inlay hints in Helix are still being improved on and may be a little bit laggy/janky under some circumstances. Please report any bugs you see so we can fix them!
 
 ### `[editor.cursor-shape]` Section
@@ -153,7 +153,7 @@ Valid values for these options are `block`, `bar`, `underline`, or `hidden`.
 > change shape.
 
 | Key      | Description                                | Default |
-| ---      | -----------                                | ------- |
+| -------- | ------------------------------------------ | ------- |
 | `normal` | Cursor shape in [normal mode][normal mode] | `block` |
 | `insert` | Cursor shape in [insert mode][insert mode] | `block` |
 | `select` | Cursor shape in [select mode][select mode] | `block` |
@@ -244,10 +244,10 @@ name = "rust"
 
 Search specific options.
 
-| Key | Description | Default |
-|--|--|---------|
-| `smart-case` | Enable smart case regex searching (case-insensitive unless pattern contains upper case characters) | `true` |
-| `wrap-around`| Whether the search should wrap after depleting the matches | `true` |
+| Key           | Description                                                                                        | Default |
+| ------------- | -------------------------------------------------------------------------------------------------- | ------- |
+| `smart-case`  | Enable smart case regex searching (case-insensitive unless pattern contains upper case characters) | `true`  |
+| `wrap-around` | Whether the search should wrap after depleting the matches                                         | `true`  |
 
 ### `[editor.whitespace]` Section
 
@@ -285,7 +285,7 @@ tabpad = "·" # Tabs will look like "→···" (depending on tab width)
 Options for rendering vertical indent guides.
 
 | Key           | Description                                             | Default |
-| ---           | ---                                                     | ---     |
+| ------------- | ------------------------------------------------------- | ------- |
 | `render`      | Whether to render indent guides                         | `false` |
 | `character`   | Literal character to use for rendering the indent guide | `│`     |
 | `skip-levels` | Number of indent levels to skip                         | `0`     |
@@ -314,7 +314,7 @@ be used. This section contains top level settings, as well as settings for
 specific gutter components as subsections.
 
 | Key      | Description                    | Default                                                       |
-| ---      | ---                            | ---                                                           |
+| -------- | ------------------------------ | ------------------------------------------------------------- |
 | `layout` | A vector of gutters to display | `["diagnostics", "spacer", "line-numbers", "spacer", "diff"]` |
 
 Example:
@@ -329,7 +329,7 @@ layout = ["diff", "diagnostics", "line-numbers", "spacer"]
 Options for the line number gutter
 
 | Key         | Description                             | Default |
-| ---         | ---                                     | ---     |
+| ----------- | --------------------------------------- | ------- |
 | `min-width` | The minimum number of characters to use | `3`     |
 
 Example:
@@ -360,13 +360,13 @@ Currently unused
 
 Options for soft wrapping lines that exceed the view width:
 
-| Key                  | Description                                                  | Default |
-| ---                  | ---                                                          | ---     |
-| `enable`             | Whether soft wrapping is enabled.                            | `false` |
-| `max-wrap`           | Maximum free space left at the end of the line.              | `20`    |
-| `max-indent-retain`  | Maximum indentation to carry over when soft wrapping a line. | `40`    |
+| Key                  | Description                                                                 | Default |
+| -------------------- | --------------------------------------------------------------------------- | ------- |
+| `enable`             | Whether soft wrapping is enabled.                                           | `false` |
+| `max-wrap`           | Maximum free space left at the end of the line.                             | `20`    |
+| `max-indent-retain`  | Maximum indentation to carry over when soft wrapping a line.                | `40`    |
 | `wrap-indicator`     | Text inserted before soft wrapped lines, highlighted with `ui.virtual.wrap` | `↪ `    |
-| `wrap-at-text-width` | Soft wrap at `text-width` instead of using the full viewport size. | `false` |
+| `wrap-at-text-width` | Soft wrap at `text-width` instead of using the full viewport size.          | `false` |
 
 Example:
 
