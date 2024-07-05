@@ -100,13 +100,21 @@ impl Prompt {
         self
     }
 
+    // <<<<<<< HEAD
     pub fn with_language(
         mut self,
         language: &'static str,
         loader: Arc<ArcSwap<syntax::Loader>>,
     ) -> Self {
+        // =======
+        // pub fn with_language(mut self, language: &'static str, loader: Arc<syntax::Loader>) -> Self {
+        // >>>>>>> tree_explore
         self.language = Some((language, loader));
         self
+    }
+
+    pub fn prompt(&self) -> &str {
+        self.prompt.as_ref()
     }
 
     pub fn line(&self) -> &String {
