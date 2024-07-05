@@ -114,7 +114,10 @@
         if pkgs.stdenv.isLinux
         then pkgs.stdenv
         else pkgs.clangStdenv;
-      rustFlagsEnv = pkgs.lib.optionalString stdenv.isLinux "-C link-arg=-fuse-ld=lld -C target-cpu=native -Clink-arg=-Wl,--no-rosegment";
+      rustFlagsEnv =
+        if stdenv.isLinux
+        then ''$RUSTFLAGS -C link-arg=-fuse-ld=lld -C target-cpu=native -Clink-arg=-Wl,--no-rosegment''
+        else "$RUSTFLAGS";
       rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       craneLibMSRV = (crane.mkLib pkgs).overrideToolchain rustToolchain;
       craneLibStable = (crane.mkLib pkgs).overrideToolchain pkgs.pkgsBuildHost.rust-bin.stable.latest.default;
@@ -176,12 +179,11 @@
           [lld_13 cargo-flamegraph rust-analyzer]
           ++ (lib.optional (stdenv.isx86_64 && stdenv.isLinux) pkgs.cargo-tarpaulin)
           ++ (lib.optional stdenv.isLinux pkgs.lldb)
-          ++ (lib.optional stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks;
-            [CoreFoundation Security]));
+          ++ (lib.optional stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [CoreFoundation Security]));
         shellHook = ''
           export HELIX_RUNTIME="$PWD/runtime"
           export RUST_BACKTRACE="1"
-          export RUSTFLAGS="''${RUSTFLAGS:-""} ${rustFlagsEnv}"
+          export RUSTFLAGS="${rustFlagsEnv}"
         '';
       };
     })

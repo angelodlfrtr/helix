@@ -11,9 +11,9 @@ use helix_stdx::path::expand_tilde;
 use helix_view::{
     document::Mode,
     editor::{
-        Action, BufferLine, ConfigEvent, CursorShapeConfig, FilePickerConfig, GutterConfig,
-        IndentGuidesConfig, LineEndingConfig, LineNumber, LspConfig, SearchConfig, SmartTabConfig,
-        StatusLineConfig, TerminalConfig, WhitespaceConfig,
+        Action, AutoSave, BufferLine, ConfigEvent, CursorShapeConfig, FilePickerConfig,
+        GutterConfig, IndentGuidesConfig, LineEndingConfig, LineNumber, LspConfig, SearchConfig,
+        SmartTabConfig, StatusLineConfig, TerminalConfig, WhitespaceConfig,
     },
     extension::document_id_to_usize,
     input::KeyEvent,
@@ -1192,7 +1192,7 @@ impl HelixConfiguration {
 
     fn auto_save(&self, option: bool) {
         let mut app_config = self.load_config();
-        app_config.editor.auto_save = option;
+        app_config.editor.auto_save = AutoSave::default();
         self.store_config(app_config);
     }
 
@@ -1963,11 +1963,12 @@ fn configure_engine_impl(mut engine: Engine) -> Engine {
             PathBuf::from(""),
             move |cx, path: &PathBuf, action| {
                 if let Err(e) = cx.editor.open(path, action) {
-                    let err = if let Some(err) = e.source() {
-                        format!("{}", err)
-                    } else {
-                        format!("unable to open \"{}\"", path.display())
-                    };
+                    let err = format!("unable to open \"{}\" with err {:?}", path.display(), e);
+                    // let err = if let Some(err) = e.source() {
+                    //     format!("{}", err)
+                    // } else {
+                    //     format!("unable to open \"{}\"", path.display())
+                    // };
                     cx.editor.set_error(err);
                 }
             },
