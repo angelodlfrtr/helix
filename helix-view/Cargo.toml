@@ -11,9 +11,9 @@ repository.workspace = true
 homepage.workspace = true
 
 [features]
-default = []
 term = ["crossterm"]
 unicode-lines = []
+steel = ["dep:steel-core", "helix-core/steel"]
 
 [dependencies]
 helix-stdx = { path = "../helix-stdx" }
@@ -51,6 +51,9 @@ log = "~0.4"
 
 parking_lot = "0.12.3"
 thiserror.workspace = true
+
+# plugin support
+steel-core = { workspace = true, optional = true }
 
 [target.'cfg(windows)'.dependencies]
 clipboard-win = { version = "5.3", features = ["std"] }
