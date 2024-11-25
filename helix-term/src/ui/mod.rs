@@ -14,6 +14,7 @@ mod spinner;
 mod statusline;
 mod text;
 mod text_decorations;
+mod trailing_whitespace;
 mod tree;
 
 use crate::compositor::Compositor;
