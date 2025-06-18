@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -14,57 +13,70 @@
     {
       self,
       nixpkgs,
-      flake-utils,
       rust-overlay,
       ...
     }:
     let
+      inherit (nixpkgs) lib;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+      eachSystem = lib.genAttrs systems;
+      pkgsFor = eachSystem (
+        system:
+        import nixpkgs {
+          localSystem.system = system;
+          overlays = [
+            (import rust-overlay)
+            self.overlays.helix
+          ];
+        }
+      );
       gitRev = self.rev or self.dirtyRev or null;
     in
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ (import rust-overlay) ];
-        };
+    {
+      packages = eachSystem (system: {
+        inherit (pkgsFor.${system}) helix;
+        /*
+          The default Helix build. Uses the latest stable Rust toolchain, and unstable
+          nixpkgs.
 
-        # Get Helix's MSRV toolchain to build with by default.
-        msrvToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        msrvPlatform = pkgs.makeRustPlatform {
-          cargo = msrvToolchain;
-          rustc = msrvToolchain;
-        };
-      in
-      {
-        packages = rec {
-          helix = pkgs.callPackage ./default.nix { inherit gitRev; };
+          The build inputs can be overridden with the following:
 
-          /**
-            The default Helix build. Uses the latest stable Rust toolchain, and unstable
-            nixpkgs.
+          packages.${system}.default.override { rustPlatform = newPlatform; };
 
-            The build inputs can be overriden with the following:
+          Overriding a derivation attribute can be done as well:
 
-            packages.${system}.default.override { rustPlatform = newPlatform; };
+          packages.${system}.default.overrideAttrs { buildType = "debug"; };
+        */
+        default = self.packages.${system}.helix;
+      });
+      checks = lib.mapAttrs (
+        system: pkgs:
+        let
+          # Get Helix's MSRV toolchain to build with by default.
+          msrvToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          msrvPlatform = pkgs.makeRustPlatform {
+            cargo = msrvToolchain;
+            rustc = msrvToolchain;
+          };
+        in
+        {
+          helix = self.packages.${system}.helix.override {
+            rustPlatform = msrvPlatform;
+          };
+        }
+      ) pkgsFor;
 
-            Overriding a derivation attribute can be done as well:
-
-            packages.${system}.default.overrideAttrs { buildType = "debug"; };
-          */
-          default = helix;
-        };
-
-        checks.helix = self.outputs.packages.${system}.helix.override {
-          buildType = "debug";
-          rustPlatform = msrvPlatform;
-        };
-
-        # Devshell behavior is preserved.
-        devShells.default =
+      # Devshell behavior is preserved.
+      devShells = lib.mapAttrs (system: pkgs: {
+        default =
           let
             commonRustFlagsEnv = "-C link-arg=-fuse-ld=lld -C target-cpu=native --cfg tokio_unstable";
-            platformRustFlagsEnv = pkgs.lib.optionalString pkgs.stdenv.isLinux "-Clink-arg=-Wl,--no-rosegment";
+            platformRustFlagsEnv = lib.optionalString pkgs.stdenv.isLinux "-Clink-arg=-Wl,--no-rosegment";
           in
           pkgs.mkShell {
             inputsFrom = [ self.checks.${system}.helix ];
@@ -83,14 +95,16 @@
               export RUSTFLAGS="''${RUSTFLAGS:-""} ${commonRustFlagsEnv} ${platformRustFlagsEnv}"
             '';
           };
-      }
-    )
-    // {
-      overlays.default = final: prev: {
-        helix = final.callPackage ./default.nix { inherit gitRev; };
+      }) pkgsFor;
+
+      overlays = {
+        helix = final: prev: {
+          helix = final.callPackage ./default.nix { inherit gitRev; };
+        };
+
+        default = self.overlays.helix;
       };
     };
-
   nixConfig = {
     extra-substituters = [ "https://helix.cachix.org" ];
     extra-trusted-public-keys = [ "helix.cachix.org-1:ejp9KQpR1FBI2onstMQ34yogDm4OgU2ru6lIwPvuCVs=" ];
