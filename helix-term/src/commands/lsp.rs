@@ -231,6 +231,13 @@ fn diag_picker(
         }
     }
 
+    flat_diag.sort_by(|a, b| {
+        a.diag
+            .severity
+            .unwrap_or(lsp::DiagnosticSeverity::HINT)
+            .cmp(&b.diag.severity.unwrap_or(lsp::DiagnosticSeverity::HINT))
+    });
+
     let styles = DiagnosticStyles {
         hint: cx.editor.theme.get("hint"),
         info: cx.editor.theme.get("info"),
@@ -807,7 +814,9 @@ pub fn code_action(cx: &mut Context) {
             });
             picker.move_down(); // pre-select the first item
 
-            let popup = Popup::new("code-action", picker).with_scrollbar(false);
+            let popup = Popup::new("code-action", picker)
+                .with_scrollbar(false)
+                .auto_close(true);
 
             compositor.replace_or_push("code-action", popup);
         };
