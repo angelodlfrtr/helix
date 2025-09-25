@@ -49,6 +49,8 @@ rustPlatform.buildRustPackage (self: {
     allowBuiltinFetchGit = true;
   };
 
+  propagatedBuildInputs = [ runtimeDir ];
+
   nativeBuildInputs = [
     installShellFiles
     git
