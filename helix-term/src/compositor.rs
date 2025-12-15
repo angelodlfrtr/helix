@@ -13,6 +13,7 @@ pub type SyncCallback = Box<dyn FnOnce(&mut Compositor, &mut Context) + Sync>;
 pub enum EventResult {
     Ignored(Option<Callback>),
     Consumed(Option<Callback>),
+    ConsumedWithoutRerender,
 }
 
 use crate::job::Jobs;
@@ -34,47 +35,6 @@ impl Context<'_> {
         tokio::task::block_in_place(|| helix_lsp::block_on(self.jobs.finish(self.editor, None)))?;
         tokio::task::block_in_place(|| helix_lsp::block_on(self.editor.flush_writes()))?;
         Ok(())
-    }
-
-    /// Purpose: to test `handle_event` without escalating the test case to integration test
-    /// Usage:
-    /// ```
-    /// let mut editor = Context::dummy_editor();
-    /// let mut jobs = Context::dummy_jobs();
-    /// let mut cx = Context::dummy(&mut jobs, &mut editor);
-    /// ```
-    #[cfg(test)]
-    pub fn dummy(jobs: &'a mut Jobs, editor: &'a mut helix_view::Editor) -> Context<'a> {
-        Context {
-            jobs,
-            scroll: None,
-            editor,
-        }
-    }
-
-    #[cfg(test)]
-    pub fn dummy_jobs() -> Jobs {
-        Jobs::new()
-    }
-
-    #[cfg(test)]
-    pub fn dummy_editor() -> Editor {
-        use crate::config::Config;
-        use arc_swap::{access::Map, ArcSwap};
-        use helix_core::syntax::{self, Configuration};
-        use helix_view::theme;
-        use std::sync::Arc;
-
-        let config = Arc::new(ArcSwap::from_pointee(Config::default()));
-        Editor::new(
-            Rect::new(0, 0, 60, 120),
-            Arc::new(theme::Loader::new(&[])),
-            Arc::new(syntax::Loader::new(Configuration { language: vec![] })),
-            Arc::new(Arc::new(Map::new(
-                Arc::clone(&config),
-                |config: &Config| &config.editor,
-            ))),
-        )
     }
 }
 
@@ -128,6 +88,10 @@ pub trait Component: Any + AnyComponent {
             self.handle_event(&Event::Key(event), &mut cx);
         }
         Ok(())
+    }
+
+    fn name(&self) -> Option<&str> {
+        self.id()
     }
 }
 
@@ -192,11 +156,20 @@ impl Compositor {
         Some(self.layers.remove(idx))
     }
 
+    pub fn remove_by_dynamic_name(&mut self, id: &str) -> Option<Box<dyn Component>> {
+        let idx = self
+            .layers
+            .iter()
+            .position(|layer| layer.name() == Some(id))?;
+        Some(self.layers.remove(idx))
+    }
+
     pub fn remove_type<T: 'static>(&mut self) {
         let type_name = std::any::type_name::<T>();
         self.layers
             .retain(|component| component.type_name() != type_name);
     }
+
     pub fn handle_event(&mut self, event: &Event, cx: &mut Context) -> bool {
         // If it is a key event, a macro is being recorded, and a macro isn't being replayed,
         // push the key event to the recording.
@@ -223,6 +196,10 @@ impl Compositor {
                     consumed = true;
                     break;
                 }
+                // Swallow the event, but don't trigger a re-render
+                EventResult::ConsumedWithoutRerender => {
+                    break;
+                }
                 EventResult::Ignored(Some(callback)) => {
                     callbacks.push(callback);
                 }
@@ -239,7 +216,9 @@ impl Compositor {
 
     pub fn render(&mut self, area: Rect, surface: &mut Surface, cx: &mut Context) {
         for layer in &mut self.layers {
-            layer.render(area, surface, cx);
+            if layer.should_update() {
+                layer.render(area, surface, cx)
+            };
         }
     }
 
