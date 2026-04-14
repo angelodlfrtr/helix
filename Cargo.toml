@@ -41,23 +41,23 @@ package.helix-term.opt-level = 2
 tree-house = { version = "0.3.0", default-features = false }
 nucleo = "0.5.0"
 slotmap = "1.1.1"
-# slotmap = "1.0.7"
-steel-core = { git = "https://github.com/mattwparas/steel.git", version = "0.7.0", features = ["anyhow", "dylibs", "sync", "triomphe", "imbl"] }
+steel-core = { git = "https://github.com/mattwparas/steel.git", rev = "875b6739eed0b7d053a53e7b694496954f5681f6", version = "0.7.0", features = ["anyhow", "dylibs", "sync", "triomphe", "imbl"] }
 thiserror = "2.0"
-tempfile = "3.23.0"
-bitflags = "2.10"
-unicode-segmentation = "1.2"
+tempfile = "3.27.0"
+bitflags = "2.11"
+unicode-segmentation = "1.13"
 ropey = { version = "1.6.1", default-features = false, features = ["simd"] }
 foldhash = "0.2"
 parking_lot = "0.12"
 futures-executor = "0.3"
 futures-util = { version = "0.3", features = ["std", "async-await"], default-features = false }
-tokio-stream = "0.1.17"
-toml = "0.9"
-termina = "0.1"
+tokio-stream = "0.1.18"
+toml = "1.1"
+termina = "0.3"
 sonic-rs = "0.5"
-# MSRV: update once the MSRV is >=1.85
-globset = "=0.4.16"
+globset = "0.4"
+etcetera = "0.11"
+arc-swap = "1.9"
 
 [workspace.package]
 version = "25.7.1"
@@ -67,4 +67,4 @@ categories = ["editor"]
 repository = "https://github.com/helix-editor/helix"
 homepage = "https://helix-editor.com"
 license = "MPL-2.0"
-rust-version = "1.82"
+rust-version = "1.90"

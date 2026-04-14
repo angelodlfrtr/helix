@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use helix_core::doc_formatter::{DocumentFormatter, GraphemeSource, TextFormat};
+use helix_core::doc_formatter::{DocumentFormatter, FormattedGrapheme, GraphemeSource, TextFormat};
 use helix_core::graphemes::Grapheme;
 use helix_core::str_utils::char_to_byte_idx;
 use helix_core::syntax::{self, HighlightEvent, Highlighter, OverlayHighlights};
@@ -161,7 +161,7 @@ pub fn render_text(
 
         let virt = grapheme.is_virtual();
         let grapheme_width = renderer.draw_grapheme(
-            grapheme.raw,
+            &grapheme,
             grapheme_style,
             virt,
             &mut last_line_indent_level,
@@ -234,7 +234,7 @@ impl<'a> TextRenderer<'a> {
             trailing_whitespace_style: theme.get("ui.virtual.trailing_whitespace"),
             indent_width,
             starting_indent: offset.col / indent_width as usize
-                + (offset.col % indent_width as usize != 0) as usize
+                + !offset.col.is_multiple_of(indent_width as usize) as usize
                 + editor_config.indent_guides.skip_levels as usize,
             indent_guide_style: text_style.patch(
                 theme
@@ -290,7 +290,7 @@ impl<'a> TextRenderer<'a> {
     /// Draws a single `grapheme` at the current render position with a specified `style`.
     pub fn draw_grapheme(
         &mut self,
-        grapheme: Grapheme,
+        grapheme: &FormattedGrapheme,
         grapheme_style: GraphemeStyle,
         is_virtual: bool,
         last_indent_level: &mut usize,
@@ -320,34 +320,32 @@ impl<'a> TextRenderer<'a> {
         } else {
             &self.tab
         };
-        let mut whitespace_kind = WhitespaceKind::None;
-        let grapheme = match grapheme {
+        let whitespace_kind = match &grapheme.raw {
+            Grapheme::Tab { .. } => WhitespaceKind::Tab,
+            Grapheme::Other { g } if g == " " && !grapheme.source.is_eof() => {
+                WhitespaceKind::Space
+            }
+            Grapheme::Other { g } if g == "\u{00A0}" => WhitespaceKind::NonBreakingSpace,
+            Grapheme::Other { g } if g == "\u{202F}" => WhitespaceKind::NarrowNonBreakingSpace,
+            Grapheme::Newline => WhitespaceKind::Newline,
+            _ => WhitespaceKind::None,
+        };
+        let viewport_right_edge =
+            self.offset.col + self.viewport.width as usize - 1;
+
+        let grapheme = match grapheme.raw {
             Grapheme::Tab { width } => {
-                whitespace_kind = WhitespaceKind::Tab;
                 let grapheme_tab_width = char_to_byte_idx(tab, width);
                 &tab[..grapheme_tab_width]
             }
             // TODO special rendering for other whitespaces?
-            Grapheme::Other { ref g } if g == " " => {
-                whitespace_kind = WhitespaceKind::Space;
-                space
-            }
-            Grapheme::Other { ref g } if g == "\u{00A0}" => {
-                whitespace_kind = WhitespaceKind::NonBreakingSpace;
-                nbsp
-            }
-            Grapheme::Other { ref g } if g == "\u{202F}" => {
-                whitespace_kind = WhitespaceKind::NarrowNonBreakingSpace;
-                nnbsp
-            }
+            Grapheme::Other { ref g } if g == " " && !grapheme.source.is_eof() => space,
+            Grapheme::Other { ref g } if g == "\u{00A0}" => nbsp,
+            Grapheme::Other { ref g } if g == "\u{202F}" => nnbsp,
             Grapheme::Other { ref g } => g,
-            Grapheme::Newline => {
-                whitespace_kind = WhitespaceKind::Newline;
-                &self.newline
-            }
+            Grapheme::Newline => &self.newline,
         };
 
-        let viewport_right_edge = self.viewport.width as usize + self.offset.col - 1;
         let in_bounds = self.column_in_bounds(position.col, width);
 
         if in_bounds {

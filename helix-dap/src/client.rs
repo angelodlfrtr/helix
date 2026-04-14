@@ -279,12 +279,20 @@ impl Client {
                 .map_err(|e| Error::Other(e.into()))?;
 
             // TODO: specifiable timeout, delay other calls until initialize success
-            timeout(Duration::from_secs(20), callback_rx.recv())
+            let response = timeout(Duration::from_secs(20), callback_rx.recv())
                 .await
                 .map_err(|_| Error::Timeout(id))? // return Timeout
-                .ok_or(Error::StreamClosed)?
-                .map(|response| response.body.unwrap_or_default())
-            // TODO: check response.success
+                .ok_or(Error::StreamClosed)??;
+
+            if !response.success {
+                let message = response
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| "DAP request failed".to_string());
+                return Err(Error::Other(anyhow!(message)));
+            }
+
+            Ok(response.body.unwrap_or_default())
         }
     }
 
@@ -294,7 +302,6 @@ impl Client {
     ) -> Result<R::Result>
     where
         R::Arguments: serde::Serialize,
-        R::Result: core::fmt::Debug, // TODO: temporary
     {
         // a future that resolves into the response
         let json = self.call::<R>(params).await?;
@@ -453,7 +460,7 @@ impl Client {
     }
 
     pub fn threads(&self) -> impl Future<Output = Result<Value>> {
-        self.call::<requests::Threads>(())
+        self.call::<requests::Threads>(Some(requests::ThreadsArguments {}))
     }
 
     pub async fn scopes(&self, frame_id: usize) -> Result<Vec<Scope>> {

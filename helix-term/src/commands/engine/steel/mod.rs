@@ -9,8 +9,8 @@ use helix_core::{
     syntax::{
         self,
         config::{
-            default_timeout, AutoPairConfig, LanguageConfiguration, LanguageServerConfiguration,
-            SoftWrap,
+            default_timeout, AutoPairConfig, GlobSet, LanguageConfiguration,
+            LanguageServerConfiguration, SoftWrap,
         },
     },
     text_annotations::InlineAnnotation,
@@ -3701,11 +3701,12 @@ impl HelixConfiguration {
 
                 if !patterns.is_empty() {
                     let mut builder = globset::GlobSetBuilder::new();
-                    for pattern in patterns {
-                        let glob = globset::Glob::new(&pattern)?;
+                    for pattern in &patterns {
+                        let glob = globset::Glob::new(pattern)?;
                         builder.add(glob);
                     }
-                    config.required_root_patterns = Some(builder.build()?);
+                    let inner = builder.build()?;
+                    config.required_root_patterns = Some(GlobSet::new(inner, patterns));
                 }
             }
         } else {
@@ -3746,11 +3747,12 @@ impl HelixConfiguration {
 
                 if !patterns.is_empty() {
                     let mut builder = globset::GlobSetBuilder::new();
-                    for pattern in patterns {
-                        let glob = globset::Glob::new(&pattern)?;
+                    for pattern in &patterns {
+                        let glob = globset::Glob::new(pattern)?;
                         builder.add(glob);
                     }
-                    config.required_root_patterns = Some(builder.build()?);
+                    let inner = builder.build()?;
+                    config.required_root_patterns = Some(GlobSet::new(inner, patterns));
                 }
             }
 

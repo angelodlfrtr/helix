@@ -1,8 +1,8 @@
 use crate::{auto_pairs::AutoPairs, diagnostic::Severity, Language};
 
-use globset::GlobSet;
 use helix_stdx::rope;
 use serde::{ser::SerializeSeq as _, Deserialize, Serialize};
+use serde_json::Value;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -36,7 +36,7 @@ pub struct LanguageConfiguration {
     #[serde(default)]
     pub shebangs: Vec<String>, // interpreter(s) associated with language
     #[serde(default)]
-    pub roots: Vec<String>, // these indicate project roots <.git, Cargo.toml>
+    pub roots: RootMarkers, // these indicate project roots <.git, Cargo.toml>
     #[serde(
         default,
         skip_serializing,
@@ -109,6 +109,73 @@ impl LanguageConfiguration {
     pub fn language(&self) -> Language {
         // This value must be set by `super::Loader::new`.
         self.language.unwrap()
+    }
+}
+
+pub type RootMarkers = GlobSet;
+
+/// A wrapper around `globset::GlobSet` which implements `Serialize`, `Deserialize`, and `Clone`.
+#[derive(Default, Debug)]
+pub struct GlobSet {
+    inner: globset::GlobSet,
+    /// Glob patterns as-is before building. This is used for `Serialize` and `Clone`.
+    patterns: Vec<String>,
+}
+
+impl GlobSet {
+    pub fn new(inner: globset::GlobSet, patterns: Vec<String>) -> Self {
+        Self { inner, patterns }
+    }
+
+    pub fn is_match<P: AsRef<std::path::Path>>(&self, path: P) -> bool {
+        self.inner.is_match(path)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.patterns.is_empty()
+    }
+}
+
+impl Clone for GlobSet {
+    fn clone(&self) -> Self {
+        let mut builder = globset::GlobSetBuilder::new();
+        for pattern in &self.patterns {
+            // Safe: patterns were already validated when this GlobSet was created
+            builder.add(globset::Glob::new(pattern).unwrap());
+        }
+        Self {
+            inner: builder.build().unwrap(),
+            patterns: self.patterns.clone(),
+        }
+    }
+}
+
+impl Serialize for GlobSet {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut patterns = serializer.serialize_seq(Some(self.patterns.len()))?;
+        for pattern in &self.patterns {
+            patterns.serialize_element(pattern)?;
+        }
+        patterns.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for GlobSet {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let patterns: Vec<String> = Deserialize::deserialize(deserializer)?;
+        let mut builder = globset::GlobSetBuilder::new();
+        for pattern in &patterns {
+            let glob = globset::Glob::new(pattern).map_err(serde::de::Error::custom)?;
+            builder.add(glob);
+        }
+        let inner = builder.build().map_err(serde::de::Error::custom)?;
+        Ok(Self { inner, patterns })
     }
 }
 
@@ -265,6 +332,7 @@ pub enum LanguageServerFeature {
     DocumentHighlight,
     Completion,
     CodeAction,
+    DocumentLinks,
     WorkspaceCommand,
     DocumentSymbols,
     WorkspaceSymbols,
@@ -274,6 +342,7 @@ pub enum LanguageServerFeature {
     RenameSymbol,
     InlayHints,
     DocumentColors,
+    CallHierarchy,
 }
 
 impl Display for LanguageServerFeature {
@@ -291,6 +360,7 @@ impl Display for LanguageServerFeature {
             DocumentHighlight => "document-highlight",
             Completion => "completion",
             CodeAction => "code-action",
+            DocumentLinks => "document-links",
             WorkspaceCommand => "workspace-command",
             DocumentSymbols => "document-symbols",
             WorkspaceSymbols => "workspace-symbols",
@@ -299,6 +369,7 @@ impl Display for LanguageServerFeature {
             RenameSymbol => "rename-symbol",
             InlayHints => "inlay-hints",
             DocumentColors => "document-colors",
+            CallHierarchy => "call-hierarchy",
         };
         write!(f, "{feature}",)
     }
@@ -390,11 +461,12 @@ where
         return Ok(None);
     }
     let mut builder = globset::GlobSetBuilder::new();
-    for pattern in patterns {
-        let glob = globset::Glob::new(&pattern).map_err(serde::de::Error::custom)?;
+    for pattern in &patterns {
+        let glob = globset::Glob::new(pattern).map_err(serde::de::Error::custom)?;
         builder.add(glob);
     }
-    builder.build().map(Some).map_err(serde::de::Error::custom)
+    let inner = builder.build().map_err(serde::de::Error::custom)?;
+    Ok(Some(GlobSet { inner, patterns }))
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -410,11 +482,7 @@ pub struct LanguageServerConfiguration {
     pub config: Option<serde_json::Value>,
     #[serde(default = "default_timeout")]
     pub timeout: u64,
-    #[serde(
-        default,
-        skip_serializing,
-        deserialize_with = "deserialize_required_root_patterns"
-    )]
+    #[serde(default)]
     pub required_root_patterns: Option<GlobSet>,
 }
 
@@ -443,22 +511,13 @@ pub enum DebugConfigCompletion {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum DebugArgumentValue {
-    String(String),
-    Array(Vec<String>),
-    Boolean(bool),
-    Table(HashMap<String, String>),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct DebugTemplate {
     pub name: String,
     pub request: String,
     #[serde(default)]
     pub completion: Vec<DebugConfigCompletion>,
-    pub args: HashMap<String, DebugArgumentValue>,
+    pub args: HashMap<String, Value>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
